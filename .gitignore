@@ -303,6 +303,7 @@ Makefile-tmp
 *.fasl
 *.cert
 *.temp
+workxxx*
 
 # compiled lisp images
 *.FASL
