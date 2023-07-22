@@ -1,0 +1,41 @@
+* <2022-12-10 Sat>
+** Use of maps
+- Maps should now be used everywhere you want a map.
+** Numeric theorems
+- You may no longer need some numeric theorems, so make sure any that
+  are in the books are really needed.
+* <2022-11-28 Mon>
+** Defun->Definec
+- Get rid of defun's and replace with definec so that we have
+  well-typed definitions.
+** Consistent record construction
+- Get rid of any records constructed directly with cons, quote,
+  etc. and just use mset, msets or built-in record constructors. That should
+  simplify some theorems.
+** Use of records
+- There are some defdatas that should be records that are now just a
+  list of things. That's hard to read and understand, so let's use
+  records instead. Previously some of the reasoning may have been
+  harder to do with records, but this will be a good test.
+** Defthms->Properties
+- Replace defthms with properties; makes types explicit, makes it
+  clear if we are/are not checking contracts.
+** Allow large time for properties
+- Avoid having to add :proof-timeout forms.
+  - Done: Pete <2022-11-28 Mon>
+** Clean up the files
+- Remove any unneeded lemmas, hints, etc. I did some of that, but did
+  there is more to do.
+** Model Validation
+- We have to go over the model and compare it with the actual English
+  specification as part of a validation process. Let's do that once
+  the above is done.
+** Export files
+- Create versions of these books that have the minimal forms an
+  evaluator should look at to understand what we did. The idea is to
+  create a file with top-down forms that do not include helper lemmas,
+  hints, etc. They just state the top-level definitions and
+  properties. We can do top-down because these books will start by
+  including the books with the full proofs; this is also why we don't
+  need hints, lemmas, etc. Add comments so that it is well-documented;
+  we can refer to our paper, the English specification, etc.
