@@ -314,46 +314,6 @@
 	       (calcP4 (tctrs-invalidMessageDeliveries tctrs)))
 	    ))))
 
-(property max-helper2 (tctrs :tctrs wtpm :wp)
-	  (=> (>= (params-meshMessageDeliveriesCap (cdr wtpm))
-		  (params-meshMessageDeliveriesThreshold (cdr wtpm)))
-	      (b* ((weights (car wtpm))
-		   (params (cdr wtpm)))
-		  (<= (* (params-topicweight params)
-			 (+ (* (mget :w1 weights)
-			       (calcP1 (tctrs-meshTime tctrs)
-				       (params-meshTimeQuantum params)
-				       (params-timeQuantaInMeshCap params)))
-			    (* (mget :w2 weights)
-			       (calcP2 (tctrs-firstMessageDeliveries tctrs)
-				       (params-p2cap params)))))
-		      (* (params-topicweight params)
-			 (+ (* (mget :w1 weights)
-			       (params-timeQuantaInMeshCap params))
-			    (* (mget :w2 weights)
-			       (params-p2cap params)))))))
-	  :hints (("Goal"
-		   :in-theory (enable weightsp paramsp calcP2 calcP1 wpp))))
-
-;; This shows that we only need P1 and P2 to get max score. Other
-;; components only lead to decline in the score.
-(property max-helper3 (tctrs :tctrs wtpm :wp)
-	  (=> (>= (params-meshMessageDeliveriesCap (cdr wtpm))
-		  (params-meshMessageDeliveriesThreshold (cdr wtpm)))
-	      (b* ((weights (car wtpm))
-		   (params (cdr wtpm)))
-		  (<= (calcScoreTopic tctrs wtpm)
-		      (* (params-topicweight params)
-			 (+ (* (mget :w1 weights)
-			       (calcP1 (tctrs-meshTime tctrs)
-				       (params-meshTimeQuantum params)
-				       (params-timeQuantaInMeshCap params)))
-			    (* (mget :w2 weights)
-			       (calcP2 (tctrs-firstMessageDeliveries tctrs)
-				       (params-p2cap params))))))))
-	  :hints (("Goal"
-		   :in-theory (enable calcScoreTopic wpp weightsp paramsp))))
-
 ;; Limit on max. score achievable in a topic, independent of counters
 (property max-topic-score (tctrs :tctrs wtpm :wp)
 	  (=> (>= (params-meshMessageDeliveriesCap (cdr wtpm))
@@ -1043,3 +1003,59 @@
                s)))))
 
 
+"ETH-2.0 Counterexample to Property 1"
+(include-book "scoring-eth2-demo")
+
+(defthm eth-twp-valid
+  (is-valid-twp *eth-twp*))
+
+(ACL2S-DEFAULTS :SET TESTING-ENABLED t)
+
+;;Property 1
+(property (ptc :pt-tctrs-map pcm :p-gctrs-map p :peer top :topic)
+          :debug? :all
+	  :proofs? nil
+          :check-contracts? nil
+          :TESTING-TIMEOUT 600
+	  :hyps  (^ (member-equal (cons p top) (acl2::alist-keys ptc))
+                    (> (lookup-score p (calc-nbr-scores-map ptc pcm *eth-twp*)) 0))
+          (> (calcScoreTopic (lookup-tctrs p top ptc) (mget top *eth-twp*))
+             0))
+
+
+;;counterexample to property 1
+;; even with no app-specific score, we get positive overall score due to other
+;; topic scores
+(b* ((TOP 'BLOCKS)
+     (P 'P1)
+     (PCM `((P4 . ,(gctrs 0 0 0))
+            (P5 . ,(gctrs 0 0 0))
+            (P6 . ,(gctrs 0 0 0))))
+     (PTC (nth-pt-tctrs-map 0)))
+  (cons 
+   (list
+    (^ (member-equal (cons p top) (acl2::alist-keys ptc))
+                    (> (lookup-score p (calc-nbr-scores-map ptc pcm *eth-twp*)) 0))
+
+    (> (calcScoreTopic (lookup-tctrs p top ptc) (mget top *eth-twp*))
+             0)
+    
+    (calcScoreTopic (lookup-tctrs p 'AGG ptc)
+                    (mget 'AGG *ETH-TWP*))
+    (calcScoreTopic (lookup-tctrs p 'BLOCKS ptc)
+                    (mget 'BLOCKS *ETH-TWP*))
+    (calcScoreTopic (lookup-tctrs p 'SUB1 ptc)
+                    (mget 'SUB1 *ETH-TWP*))
+    (calcScoreTopic (lookup-tctrs p 'SUB2 ptc)
+                    (mget 'SUB2 *ETH-TWP*))
+    (calcScoreTopic (lookup-tctrs p 'SUB3 ptc)
+                    (mget 'SUB3 *ETH-TWP*)))
+   (lookup-score p (calc-nbr-scores-map ptc pcm *eth-twp*)))
+  )
+;; P1, AGG
+;; 8.29
+;; 22.21, -4.5, 7.80, -25, 7.78
+
+"Each of the attacks we mentioned in the paper can be browsed in the attacks directory."
+"We show attacks in AG1.lisp, AG-StopAttacks.lisp, eclipse.lisp and partition-attack.lisp."
+"We needed different files for each attack, because the twp for ETH depends on the number of subnet topics, which we change based on kind of attack we are performing. This requires redefinition of the constant *eth-twp*."
